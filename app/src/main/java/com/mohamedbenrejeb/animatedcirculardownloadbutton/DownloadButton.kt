@@ -90,7 +90,7 @@ fun DownloadButton(
         val animationSixProgress = remember { Animatable(0f) }
         val animationSevenProgress = remember { Animatable(0f) }
 
-        val animationDuration = 2000
+        val animationDuration = 200
 
         LaunchedEffect(key1 = isAnimating) {
             if (!isAnimating) {
@@ -305,9 +305,7 @@ fun DownloadButton(
     }
 }
 
-@Preview(apiLevel = 30, showSystemUi = false, showBackground = false,
-    device = "spec:width=1280dp,height=800dp,dpi=480"
-)
+@Preview()
 @Composable
 fun DownloadButtonPreview() {
     AnimatedCircularDownloadButtonTheme {
@@ -336,7 +334,7 @@ fun DownloadButtonPreview() {
                 if (startDownload) {
                     progress.animateTo(
                         1f,
-                        tween(6000, 5000)
+                        tween(6000, 1000)
                     )
                 } else {
                     progress.snapTo(0f)
