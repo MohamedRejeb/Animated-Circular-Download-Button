@@ -2,108 +2,175 @@ package com.mohamedbenrejeb.animatedcirculardownloadbutton
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.PathNode
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mohamedbenrejeb.animatedcirculardownloadbutton.ui.theme.AnimatedCircularDownloadButtonTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.max
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 @Composable
 fun DownloadButton(
+    onClick: () -> Unit,
+    strokeColor: Color,
+    strokeSize: Dp,
+    progress: Float,
     modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val density = LocalDensity.current
+    val typography = MaterialTheme.typography
     val scope = rememberCoroutineScope()
+
+    var isAnimating by remember { mutableStateOf(false) }
+    val tapAnimation = remember { Animatable(1f) }
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-//            .border(8.dp, colorScheme.primary, CircleShape)
-    ) {
-        val progress = 0.6f
-        val degrees = 180f - 180f * progress
+            .pointerInput(isAnimating) {
+                if (isAnimating) return@pointerInput
 
+                detectTapGestures(
+                    onPress = {
+                        scope.launch {
+                            tapAnimation.animateTo(0.8f)
+                        }
+                        tryAwaitRelease()
+                        scope.launch {
+                            tapAnimation.animateTo(1f)
+                        }
+                    },
+                    onTap = {
+                        isAnimating = true
+                        onClick()
+                    }
+                )
+            }
+            .graphicsLayer {
+                alpha = tapAnimation.value
+                scaleX = tapAnimation.value
+                scaleY = tapAnimation.value
+            }
+//            .border(strokeSize, colorScheme.primary, CircleShape)
+    ) {
         RoundedCircularProgressIndicator(
             progress = 1f,
-            strokeWidth = 8.dp,
-            color = colorScheme.primary.copy(alpha = 0.3f),
+            strokeWidth = strokeSize,
+            color = strokeColor.copy(alpha = 0.3f),
             modifier = Modifier
                 .fillMaxSize()
         )
 
         RoundedCircularProgressIndicator(
             progress = progress,
-            strokeWidth = 8.dp,
+            strokeWidth = strokeSize,
+            color = strokeColor,
             modifier = Modifier
                 .fillMaxSize()
         )
 
-        val animationOneProgress = remember { Animatable(1f) }
-        val animationTwoProgress = remember { Animatable(1f) }
-        val animationThreeProgress = remember { Animatable(1f) }
+        val animationOneProgress = remember { Animatable(0f) }
+        val animationTwoProgress = remember { Animatable(0f) }
+        val animationThreeProgress = remember { Animatable(0f) }
+        val animationFourProgress = remember { Animatable(0f) }
+        val animationFiveProgress = remember { Animatable(0f) }
+        val animationSixProgress = remember { Animatable(0f) }
 
-        val animationDuration = 400
+        val animationDuration = 200
 
-        LaunchedEffect(key1 = Unit) {
-            delay(1000)
-            
+        LaunchedEffect(key1 = isAnimating) {
+            if (!isAnimating) {
+                animationOneProgress.snapTo(0f)
+                animationTwoProgress.snapTo(0f)
+                animationThreeProgress.snapTo(0f)
+                animationFourProgress.snapTo(0f)
+                animationFiveProgress.snapTo(0f)
+                return@LaunchedEffect
+            }
+
             launch {
                 animationOneProgress.animateTo(
-                    0f,
+                    1f,
                     animationSpec = tween(
                         durationMillis = animationDuration,
                         delayMillis = 0,
                         easing = LinearEasing
                     )
                 )
-            }
-
-            launch {
                 animationTwoProgress.animateTo(
-                    0f,
+                    1f,
                     animationSpec = tween(
                         durationMillis = animationDuration,
-                        delayMillis = animationDuration,
-                        easing = EaseOutBack
+                        delayMillis = 0,
+                        easing = CubicBezierEasing(0.34f, 1.8f, 0.64f, 1f)
                     )
                 )
             }
 
             launch {
                 animationThreeProgress.animateTo(
-                    0f,
+                    1f,
                     animationSpec = tween(
                         durationMillis = animationDuration,
-                        delayMillis = (animationDuration * 1.7f).roundToInt(),
+                        delayMillis = (animationDuration * 1.5f).roundToInt(),
+                        easing = EaseOut
+                    )
+                )
+
+                animationFourProgress.animateTo(
+                    1f,
+                    animationSpec = tween(
+                        durationMillis = 600,
+                        delayMillis = 0,
                         easing = LinearEasing
+                    )
+                )
+
+                animationFiveProgress.animateTo(
+                    1f,
+                    infiniteRepeatable(
+                        tween(
+                            durationMillis = 600,
+                            delayMillis = 0,
+                            easing = LinearEasing
+                        ),
+                        repeatMode = RepeatMode.Restart
                     )
                 )
             }
 
+        }
+        
+        LaunchedEffect(key1 = progress) {
+            if (progress != 1f) return@LaunchedEffect
+
+            animationFiveProgress.stop()
+
+            animationSixProgress.animateTo(
+                1f,
+                animationSpec = tween(
+                    durationMillis = 600,
+                    delayMillis = 0,
+                    easing = LinearEasing
+                )
+            )
         }
 
         val downloadPath = remember { Path() }
@@ -116,101 +183,118 @@ fun DownloadButton(
                 color = colorScheme.primary.copy(alpha = 0.2f)
             )
 
-//            drawArc(
-//                color = colorScheme.primary,
-//                startAngle = 45f,
-//                sweepAngle = 45f,
-//                useCenter = false,
-//                topLeft = Offset(x = 0f, y = 0f),
-//                size = Size(size.width, size.height),
-//                style = Stroke(
-//                    width = with(density) { 8.dp.toPx() }
-//                )
-//            )
-
-//            path.cubicTo(
-//                0f, 0f,
-//                size.width / 2f, 0f,
-//                size.width, size.height,
-//            )
-
             downloadPath.reset()
 
-            downloadPath.quadraticBezierTo(
-                0f, 0f, size.width / 2f, size.height / 2f
-            )
+            val arrowStartY = size.height * 3/5f
 
-            val arrowStartHeight = size.height * 3/5f
-
-            val downloadLineHeight = max(
-                8.dp.toPx(),
-                size.height * animationOneProgress.value
-            )
-            val downloadLineY = (size.height - downloadLineHeight)/2f * animationThreeProgress.value
+            val downloadLineHeight = size.height * (1f - animationOneProgress.value)
+            val downloadLineY = (size.height - downloadLineHeight)/2f * (1f-animationThreeProgress.value) - animationThreeProgress.value * (size.height * 2/6f - 4.dp.toPx())
 
             downloadPath.moveTo(size.width / 2f, downloadLineY)
             downloadPath.lineTo(size.width / 2f, downloadLineY + downloadLineHeight)
 
-            if (animationTwoProgress.value == 1f) {
-                downloadPath.moveTo(size.width * 1/6f, arrowStartHeight)
-                downloadPath.lineTo(size.width / 2f, size.height)
-                downloadPath.moveTo(size. width / 2f, size.height)
-                downloadPath.lineTo(size.width * 5/6f, arrowStartHeight)
+            val downloadLineWidth = size.width * 4/6
+            val downloadLineX = size.width * 1/6
+
+            if (
+                animationThreeProgress.value != 1f
+                || animationThreeProgress.isRunning
+            ) {
+                downloadPath.moveTo(downloadLineX, arrowStartY)
+                downloadPath.quadraticBezierTo(
+                    size.width / 3f,
+                    arrowStartY + ((size.height - arrowStartY) / (2f - 5/6f * animationTwoProgress.value) * (1f-animationTwoProgress.value)),
+                    size.width / 2f,
+                    arrowStartY + (size.height - arrowStartY) * (1f-animationTwoProgress.value)
+                )
+
+                downloadPath.moveTo(downloadLineX + downloadLineWidth, arrowStartY)
+                downloadPath.quadraticBezierTo(
+                    size.width * 2/3f,
+                    arrowStartY + ((size.height - arrowStartY) / (2f - 5/6f * animationTwoProgress.value) * (1f-animationTwoProgress.value)),
+                    size.width / 2f,
+                    arrowStartY + (size.height - arrowStartY) * (1f-animationTwoProgress.value)
+                )
             } else {
-                val arcWidth = size.width * 4/6f
-                val arcHeight = abs((size.height - arrowStartHeight) * 2 * animationTwoProgress.value)
-
-                if (arcHeight <= 1f) {
-                    downloadPath.moveTo(size.width * 1/6f, arrowStartHeight)
-                    downloadPath.lineTo(size.width * 5/6f, arrowStartHeight)
-                } else {
-                    val sweepAngleDegrees =
-                        if (
-                            animationTwoProgress.value > 1f
-                            || animationTwoProgress.value < 0f
-                        ) -180f else 180f
-
-                    downloadPath.arcTo(
-                        rect = Rect(
-                            offset = Offset(size.width * 1/6f, arrowStartHeight - arcHeight/2f),
-                            size = Size(arcWidth, arcHeight)
-                        ),
-                        startAngleDegrees = 0f,
-                        sweepAngleDegrees = sweepAngleDegrees,
-                        forceMoveTo = true
-                    )
-//                    downloadPath.addArc(
-//                        oval = Rect(
-//                            offset = Offset(size.width * 1/6f, arrowStartHeight - arcHeight/2f),
-//                            size = Size(arcWidth, arcHeight)
-//                        ),
-//                        startAngleDegrees = 0f,
-//                        sweepAngleDegrees = 180f
-//                    )
+                val sinusoidalSize = Size(downloadLineWidth, size.height * 1/5f)
+                val points = getSinusoidalPoints(
+                    sinusoidalSize,
+                    downloadLineWidth*(1f-animationFourProgress.value),
+                    downloadLineWidth*(animationSixProgress.value),
+                    if (animationFiveProgress.isRunning) animationFiveProgress.value else 0f,
+                )
+                downloadPath.moveTo(0f + downloadLineX, points.first().y + (arrowStartY - sinusoidalSize.height/2f))
+                points.forEach { offset: Offset ->
+                    downloadPath.lineTo(offset.x + downloadLineX, offset.y + (arrowStartY - sinusoidalSize.height/2f))
                 }
             }
 
-
             drawPath(
-                color = colorScheme.primary,
+                color = strokeColor,
                 path = downloadPath,
                 style = Stroke(
-                    width = 8.dp.toPx(),
+                    width = strokeSize.toPx(),
                     cap = StrokeCap.Round
                 )
+            )
+        }
+
+        Box(
+            contentAlignment = Alignment.TopCenter,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxHeight(
+                    fraction = 0.2f + (0.1f * animationFourProgress.value)
+                )
+        ) {
+            Text(
+                text = "${(progress * 100).roundToInt()}%",
+                style = typography.titleLarge,
+                color = strokeColor,
+                modifier = Modifier
+                    .graphicsLayer {
+                        alpha = animationFourProgress.value
+                    }
             )
         }
     }
 }
 
-@Preview
+@Preview(apiLevel = 30, showSystemUi = false, showBackground = false,
+    device = "spec:width=1280dp,height=800dp,dpi=480"
+)
 @Composable
 fun DownloadButtonPreview() {
     AnimatedCircularDownloadButtonTheme {
-        Surface(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.primary)
+        ) {
+            val progress = remember {
+                Animatable(0f)
+            }
+            var startDownload by remember {
+                mutableStateOf(false)
+            }
+
             DownloadButton(
-                modifier = Modifier.width(100.dp)
+                onClick = { startDownload = true },
+                strokeColor = MaterialTheme.colorScheme.onPrimary,
+                strokeSize = 8.dp,
+                progress = progress.value,
+                modifier = Modifier.size(300.dp)
             )
+
+            LaunchedEffect(key1 = startDownload) {
+                if (startDownload) {
+                    progress.animateTo(
+                        1f,
+                        tween(6000, 800)
+                    )
+                }
+            }
         }
     }
 }
