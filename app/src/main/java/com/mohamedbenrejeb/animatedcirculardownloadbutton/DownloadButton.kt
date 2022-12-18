@@ -20,7 +20,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mohamedbenrejeb.animatedcirculardownloadbutton.ui.theme.AnimatedCircularDownloadButtonTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -45,8 +44,6 @@ fun DownloadButton(
             .fillMaxWidth()
             .aspectRatio(1f)
             .pointerInput(isAnimating) {
-                if (isAnimating) return@pointerInput
-
                 detectTapGestures(
                     onPress = {
                         scope.launch {
@@ -58,7 +55,7 @@ fun DownloadButton(
                         }
                     },
                     onTap = {
-                        isAnimating = true
+                        isAnimating = !isAnimating
                         onClick()
                     }
                 )
@@ -68,7 +65,6 @@ fun DownloadButton(
                 scaleX = tapAnimation.value
                 scaleY = tapAnimation.value
             }
-//            .border(strokeSize, colorScheme.primary, CircleShape)
     ) {
         RoundedCircularProgressIndicator(
             progress = 1f,
@@ -92,8 +88,9 @@ fun DownloadButton(
         val animationFourProgress = remember { Animatable(0f) }
         val animationFiveProgress = remember { Animatable(0f) }
         val animationSixProgress = remember { Animatable(0f) }
+        val animationSevenProgress = remember { Animatable(0f) }
 
-        val animationDuration = 200
+        val animationDuration = 2000
 
         LaunchedEffect(key1 = isAnimating) {
             if (!isAnimating) {
@@ -102,6 +99,8 @@ fun DownloadButton(
                 animationThreeProgress.snapTo(0f)
                 animationFourProgress.snapTo(0f)
                 animationFiveProgress.snapTo(0f)
+                animationSixProgress.snapTo(0f)
+                animationSevenProgress.snapTo(0f)
                 return@LaunchedEffect
             }
 
@@ -143,41 +142,62 @@ fun DownloadButton(
                     )
                 )
 
+                val spec = infiniteRepeatable<Float>(
+                    tween(
+                        durationMillis = 600,
+                        delayMillis = 0,
+                        easing = LinearEasing
+                    ),
+                    RepeatMode.Restart
+                )
+
                 animationFiveProgress.animateTo(
                     1f,
-                    infiniteRepeatable(
-                        tween(
-                            durationMillis = 600,
-                            delayMillis = 0,
-                            easing = LinearEasing
-                        ),
-                        repeatMode = RepeatMode.Restart
-                    )
+                    spec
                 )
             }
 
         }
         
-        LaunchedEffect(key1 = progress) {
+        LaunchedEffect(
+            key1 = progress,
+            key2 = animationFiveProgress.value,
+        ) {
             if (progress != 1f) return@LaunchedEffect
 
-            animationFiveProgress.stop()
+            if (
+                animationFiveProgress.value >= 0.9f
+            ) {
+                animationFiveProgress.snapTo(0f)
+            }
 
-            animationSixProgress.animateTo(
-                1f,
-                animationSpec = tween(
-                    durationMillis = 600,
-                    delayMillis = 0,
-                    easing = LinearEasing
+            if (
+                animationFiveProgress.value == 0f
+            ) {
+                animationSixProgress.animateTo(
+                    1f,
+                    animationSpec = tween(
+                        durationMillis = 600,
+                        delayMillis = 0,
+                        easing = LinearEasing
+                    )
                 )
-            )
+                animationSevenProgress.animateTo(
+                    1f,
+                    animationSpec = tween(
+                        durationMillis = 600,
+                        delayMillis = 0,
+                        easing = LinearEasing
+                    )
+                )
+            }
         }
 
         val downloadPath = remember { Path() }
 
         Canvas(
             modifier = Modifier
-                .fillMaxSize(fraction = 0.6f)
+                .fillMaxSize(fraction = 0.5f)
         ) {
             drawRect(
                 color = colorScheme.primary.copy(alpha = 0.2f)
@@ -188,13 +208,13 @@ fun DownloadButton(
             val arrowStartY = size.height * 3/5f
 
             val downloadLineHeight = size.height * (1f - animationOneProgress.value)
-            val downloadLineY = (size.height - downloadLineHeight)/2f * (1f-animationThreeProgress.value) - animationThreeProgress.value * (size.height * 2/6f - 4.dp.toPx())
+            val downloadLineY = (size.height - downloadLineHeight)/2f * (1f-animationThreeProgress.value) - animationThreeProgress.value * (size.height * 1/2f - 4.dp.toPx())
 
             downloadPath.moveTo(size.width / 2f, downloadLineY)
             downloadPath.lineTo(size.width / 2f, downloadLineY + downloadLineHeight)
 
-            val downloadLineWidth = size.width * 4/6
-            val downloadLineX = size.width * 1/6
+            val downloadLineWidth = size.width - (size.width * (2/6f) * (1f - animationTwoProgress.value))
+            val downloadLineX = 0f + (size.width * (1 / 6f) * (1f - animationTwoProgress.value))
 
             if (
                 animationThreeProgress.value != 1f
@@ -202,20 +222,24 @@ fun DownloadButton(
             ) {
                 downloadPath.moveTo(downloadLineX, arrowStartY)
                 downloadPath.quadraticBezierTo(
-                    size.width / 3f,
-                    arrowStartY + ((size.height - arrowStartY) / (2f - 5/6f * animationTwoProgress.value) * (1f-animationTwoProgress.value)),
+                    downloadLineWidth / 4f + downloadLineX,
+                    arrowStartY + ((size.height - arrowStartY) / (2f - 1f * animationTwoProgress.value) * (1f-animationTwoProgress.value)),
                     size.width / 2f,
                     arrowStartY + (size.height - arrowStartY) * (1f-animationTwoProgress.value)
                 )
 
                 downloadPath.moveTo(downloadLineX + downloadLineWidth, arrowStartY)
                 downloadPath.quadraticBezierTo(
-                    size.width * 2/3f,
-                    arrowStartY + ((size.height - arrowStartY) / (2f - 5/6f * animationTwoProgress.value) * (1f-animationTwoProgress.value)),
+                    downloadLineWidth * 3/4f + downloadLineX,
+                    arrowStartY + ((size.height - arrowStartY) / (2f - 1f * animationTwoProgress.value) * (1f-animationTwoProgress.value)),
                     size.width / 2f,
                     arrowStartY + (size.height - arrowStartY) * (1f-animationTwoProgress.value)
                 )
-            } else {
+            } else if (
+                animationFourProgress.isRunning
+                || animationFiveProgress.isRunning
+                || animationSixProgress.isRunning
+            ) {
                 val sinusoidalSize = Size(downloadLineWidth, size.height * 1/5f)
                 val points = getSinusoidalPoints(
                     sinusoidalSize,
@@ -227,6 +251,23 @@ fun DownloadButton(
                 points.forEach { offset: Offset ->
                     downloadPath.lineTo(offset.x + downloadLineX, offset.y + (arrowStartY - sinusoidalSize.height/2f))
                 }
+            } else {
+                val checkMarkHeight = size.height * 3/6f
+                val checkMarkWidth = size.width - (size.width * (2/6f) * (animationSevenProgress.value))
+                val checkMarkX = 0f + (size.width * (1/6f) * (animationSevenProgress.value))
+
+                downloadPath.moveTo(
+                    checkMarkX,
+                    arrowStartY - checkMarkHeight * 1/4f * animationSevenProgress.value
+                )
+                downloadPath.lineTo(
+                    checkMarkX + checkMarkWidth / 3f,
+                    arrowStartY + checkMarkHeight * 1/4f * animationSevenProgress.value
+                )
+                downloadPath.lineTo(
+                    checkMarkX + checkMarkWidth,
+                    arrowStartY - checkMarkHeight * 3/4f * animationSevenProgress.value
+                )
             }
 
             drawPath(
@@ -244,7 +285,7 @@ fun DownloadButton(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxHeight(
-                    fraction = 0.2f + (0.1f * animationFourProgress.value)
+                    fraction = 0.2f + (0.1f * animationFourProgress.value) - (0.1f * animationSevenProgress.value)
                 )
         ) {
             Text(
@@ -253,7 +294,11 @@ fun DownloadButton(
                 color = strokeColor,
                 modifier = Modifier
                     .graphicsLayer {
-                        alpha = animationFourProgress.value
+                        alpha = if (animationSevenProgress.value > 0f) {
+                            1f - animationSevenProgress.value
+                        } else {
+                            animationFourProgress.value
+                        }
                     }
             )
         }
@@ -280,7 +325,7 @@ fun DownloadButtonPreview() {
             }
 
             DownloadButton(
-                onClick = { startDownload = true },
+                onClick = { startDownload = !startDownload },
                 strokeColor = MaterialTheme.colorScheme.onPrimary,
                 strokeSize = 8.dp,
                 progress = progress.value,
@@ -291,8 +336,10 @@ fun DownloadButtonPreview() {
                 if (startDownload) {
                     progress.animateTo(
                         1f,
-                        tween(6000, 800)
+                        tween(6000, 5000)
                     )
+                } else {
+                    progress.snapTo(0f)
                 }
             }
         }

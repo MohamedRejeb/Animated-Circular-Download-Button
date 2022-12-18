@@ -14,13 +14,15 @@ fun getSinusoidalPoints(
     val points = mutableListOf<Offset>()
     val verticalCenter = size.height / 2
 
-    for (x in endOffset.toInt() until (size.width - startOffset).toInt() step 10) {
-        val y = (sin((x + startPercentage * size.width) * (2f * Math.PI / size.width)) * verticalCenter + verticalCenter).toFloat()
-        points.add(Offset(x.toFloat() + startOffset - endOffset, y))
+    for (x in 0 until (size.width - startOffset - endOffset).toInt() step 10) {
+        val y = (sin((x + endOffset + startPercentage * size.width) * (2f * Math.PI / size.width)) * verticalCenter + verticalCenter).toFloat()
+        points.add(Offset(x.toFloat() + startOffset, y))
     }
 
-    if (points.isEmpty() || endOffset > 0f)
+    if (points.isEmpty() || endOffset > 0f) {
+        points.add(Offset(size.width - endOffset, size.height / 2))
         points.add(Offset(size.width, size.height / 2))
+    }
 
     return points
 }
