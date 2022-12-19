@@ -14,6 +14,7 @@ https://user-images.githubusercontent.com/41842296/208382715-2030a500-5995-49b6-
 ## Acknowledgements
 
  - [Graphics in compose](https://developer.android.com/jetpack/compose/graphics/draw/overview)
+ - [Graphics examples](https://github.com/SmartToolFactory/Jetpack-Compose-Tutorials#graphics)
 
 
 ## Authors
