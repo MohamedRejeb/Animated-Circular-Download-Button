@@ -2,7 +2,7 @@
 
 # Animated Circular Download Button
 
-Animated circular download button made using Jetpack Compose, I build this animation without using any icons everything is drawn and animated from scratch with canvas.
+Animated circular download button made using Jetpack Compose, I build this animation without using any icons everything is drawn and animated from scratch using canvas.
 
 
 ## Animation Preview
