@@ -19,8 +19,8 @@ https://user-images.githubusercontent.com/41842296/208382715-2030a500-5995-49b6-
 
 ## Authors
 
-- [@M0Coding](https://www.github.com/M0Coding)
+- [@MohamedRejeb](https://www.github.com/MohamedRejeb)
 
 
 ## 🔗 Social Links
-[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mohamed-benrejeb/)
+[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/MohamedRejeb/)
